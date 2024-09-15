@@ -13,7 +13,7 @@ const Game: React.FC = () => {
 
   const checkAnswer = () => {
     if (userInput === currentStation.reading) {
-      alert("正解です！");
+      alert(`正解です！${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`);
       setScore(score + 1);
       nextStaion();
     } else {
