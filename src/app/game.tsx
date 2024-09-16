@@ -1,50 +1,125 @@
 // components/Game.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { stationNameList } from "../../stations-name-list";
+
+const getRandomStation = () => {
+  const randomIndex = Math.floor(Math.random() * stationNameList.length);
+  return stationNameList[randomIndex];
+};
 
 const Game: React.FC = () => {
   const [currentStation, setCurrentStation] = useState(stationNameList[0]);
-  const [userInput, setUserInput] = useState("");
-  const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState<number>(0);
+  const [options, setOptions] = useState<string[]>([]);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [usedStations, setUsedStations] = useState<Set<string>>(new Set());
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserInput(e.target.value);
+  useEffect(() => {
+    generateOptions();
+  }, [currentStation]);
+
+  const generateOptions = () => {
+    const correctAnswer = currentStation.reading;
+    const incorrectAnswers = currentStation.wrongReadings || [];
+    const allOptions = [correctAnswer, ...incorrectAnswers].sort(() => 0.5 - Math.random());
+    setOptions(allOptions);
+    setSelectedOption(null);
+    setMessage(null);
+    setIsConfirmed(false);
   };
 
-  const checkAnswer = () => {
-    if (userInput === currentStation.reading) {
-      alert(`正解です！${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`);
-      setScore(score + 1);
-      nextStaion();
-    } else {
-      alert("違います。もう一度試してください。");
+  const handleOptionClick = (option: string) => {
+    setSelectedOption(option);
+  };
+
+  const handleConfirmClick = () => {
+    if (selectedOption === null) {
+      setMessage("選択肢を選んでください。");
+      return;
     }
-    setUserInput("");
+
+    setIsConfirmed(true);
+
+    if (selectedOption === currentStation.reading) {
+      setMessage(`正解です！${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`);
+      setCorrectCount(prev => prev + 1);
+    } else {
+      setMessage(`違います。${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`);
+    }
+
+    if (usedStations.size + 1 === stationNameList.length) {
+      setIsGameOver(true);
+    }
   };
 
-  const nextStaion = () => {
-    const nextIndex = Math.floor(Math.random() * stationNameList.length);
-    setCurrentStation(stationNameList[nextIndex]);
+  const nextStation = () => {
+    let nextIndex;
+    let nextStation;
+    do {
+      nextIndex = Math.floor(Math.random() * stationNameList.length);
+      nextStation = stationNameList[nextIndex];
+    } while (usedStations.has(nextStation.stationName));
+
+    setUsedStations(prev => new Set(prev).add(nextStation.stationName));
+    setCurrentStation(nextStation);
   };
+
+  const resetGame = () => {
+    setCurrentStation(stationNameList[0]);
+    setCorrectCount(0);
+    setUsedStations(new Set());
+    setIsGameOver(false);
+  }
+
+  if (isGameOver) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+        <h1 className="text-4xl font-bold mb-4 text-black">ゲーム終了</h1>
+        <p className="text-2xl mb-2 text-black">正解数: {correctCount} / {stationNameList.length}</p>
+        <p className="text-xl mb-4 text-black">お疲れ様でした！</p>
+        <button
+          onClick={resetGame}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+          もう一度プレイする
+          </button>
+      </div>
+    );
+  }
+
+  const remainingQuestions = stationNameList.length - usedStations.size;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-4 text-black">駅名の読み方当てゲーム</h1>
-      <p className="text-2xl mb-2 text-black">スコア: {score}</p>
+      <h1 className="text-4xl font-bold mb-4 text-black">駅名の読み方当てクイズ</h1>
+      <p className="text-2xl mb-2 text-black">残り問題数: {remainingQuestions}</p>
       <p className="text-xl mb-4 text-black">{currentStation.stationName}</p>
-      <input
-        type="text"
-        value={userInput}
-        onChange={handleInputChange}
-        placeholder="読み方を入力してください"
-        className="p-2 border border-gray-300 rounded mb-4 text-black"
-      />
+      <div className="flex flex-col">
+        {options.map(option => (
+          <button
+            key={option}
+            onClick={() => handleOptionClick(option)}
+            className={`px-4 py-2 rounded mb-2 border-2 ${selectedOption === option ? 'bg-blue-500 text-white border-blue-500' : 'border-blue-500 text-blue-500'}`}
+            disabled={isConfirmed}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
       <button
-        onClick={checkAnswer}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        onClick={handleConfirmClick}
+        className="bg-green-500 text-white px-4 py-2 rounded mt-4 hover:bg-green-700"
       >
-        答え合わせ
+        確定
       </button>
+      {message && (
+        <div className="mt-4 p-4 border rounded bg-white text-black">
+          {message}<button onClick={nextStation} className="ml-4 bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">次の問題</button>
+        </div>
+      )}
+
     </div>
   );
 };
