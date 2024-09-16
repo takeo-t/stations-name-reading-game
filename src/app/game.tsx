@@ -1,11 +1,5 @@
-// components/Game.tsx
 import React, { useEffect, useState } from "react";
 import { stationNameList } from "../../stations-name-list";
-
-const getRandomStation = () => {
-  const randomIndex = Math.floor(Math.random() * stationNameList.length);
-  return stationNameList[randomIndex];
-};
 
 const Game: React.FC = () => {
   const [currentStation, setCurrentStation] = useState(stationNameList[0]);
