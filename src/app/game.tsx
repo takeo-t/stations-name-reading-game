@@ -7,10 +7,11 @@ const Game: React.FC = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [usedStations, setUsedStations] = useState<Set<string>>(new Set());
+  const [usedStations, setUsedStations] = useState<Set<string>>(
+    new Set([stationNameList[0].stationName])
+  );
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
-
   /**
    * ゲーム開始時に初期設定を行う
    */
