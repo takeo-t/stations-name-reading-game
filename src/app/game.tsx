@@ -1,28 +1,78 @@
 import React, { useEffect, useState } from "react";
 import { stationNameList } from "../../stations-name-list";
 
+
+interface StationRecord {
+  correct: number;
+  incorrect: number;
+}
+/**
+ * ランダムな駅名を取得する関数
+ * @returns ランダムな駅名を返す
+ */
+const getRandomStation = () => {
+  const randomIndex = Math.floor(Math.random() * stationNameList.length);
+  return stationNameList[randomIndex];
+}
+
 const Game: React.FC = () => {
+  /**
+   * 現在の問題の駅名
+   */
   const [currentStation, setCurrentStation] = useState(stationNameList[0]);
+  /**
+   * 正解数
+   */
   const [correctCount, setCorrectCount] = useState<number>(0);
+  /**
+   * 駅名の読み方の選択肢
+   */
   const [options, setOptions] = useState<string[]>([]);
+  /**
+   * 選択された駅名の読み方
+   */
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  /**
+   * 確定ボタンを押した時に表示するメッセージ
+   */
   const [message, setMessage] = useState<string | null>(null);
-  const [usedStations, setUsedStations] = useState<Set<string>>(
-    new Set([stationNameList[0].stationName])
-  );
+  /**
+   * 出題済みの駅名
+   */
+  const [usedStations, setUsedStations] = useState<Set<string>>(new Set());
+  /**
+   * 確定ボタンを押したか後、駅名の選択肢を選択できないようにする
+   */
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  /**
+   * ゲームが終了したかどうか
+   */
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   /**
    * ゲーム開始時に初期設定を行う
    */
+
+  const [stationRecords, setStationRecords] = useState<Record<string, StationRecord>>({});
+
+
   useEffect(() => {
-    generateOptions();
+    const initialStation = getRandomStation();
+    setCurrentStation(initialStation);
+    setUsedStations(new Set([initialStation.stationName]));
+    generateOptions(initialStation);
+  }, []);
+
+  /**
+   * 初回レンダリング時に選択肢を生成する
+   */
+  useEffect(() => {
+    generateOptions(currentStation);
   }, [currentStation]);
 
   /**
    * 現在の駅に対する選択肢を生成する関数
    */
-  const generateOptions = () => {
+  const generateOptions = (station: typeof currentStation) => {
     const correctAnswer = currentStation.reading;
     const incorrectAnswers = currentStation.wrongReadings || [];
     const allOptions = [correctAnswer, ...incorrectAnswers].sort(
@@ -43,6 +93,10 @@ const Game: React.FC = () => {
   };
 
   /**
+   * 確定ボタンをクリックしたときの処理
+   * @returns
+   */
+  /**
    *
    * @returns ユーザーが選択肢を選択していない場合はエラーメッセージを表示し、選択肢を選択している場合は正誤を表示する
    */
@@ -57,14 +111,10 @@ const Game: React.FC = () => {
      */
     setIsConfirmed(true);
 
-    /**
-     * 選択肢が正解かどうかを判定する
-     */
-    if (selectedOption === currentStation.reading) {
-      setMessage(
-        `正解です！${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`
-      );
-      setCorrectCount((prev) => prev + 1);
+    const isCorrect = selectedOption === currentStation.reading;
+    if (isCorrect) {
+      setMessage(`正解です！${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`);
+      setCorrectCount(prev => prev + 1);
     } else {
       setMessage(
         `違います。${currentStation.stationName}駅の読み方は「${currentStation.reading}」です。所属路線: ${currentStation.lineName}`
@@ -77,7 +127,23 @@ const Game: React.FC = () => {
   };
 
   /**
-   * 次の駅に進む関数
+   * 
+   */
+  const recordAnswer = (stationName: string, isCorrect: boolean) => {
+    setStationRecords((prevRecords: Record<string, StationRecord>) => {
+      const record = prevRecords[stationName] || { correct: 0, incorrect: 0 };
+      if (isCorrect) {
+        record.correct += 1;
+      } else {
+        record.incorrect += 1;
+      }
+      return { ...prevRecords, [stationName]: record };
+  });
+  }
+
+
+  /**
+   * 次の問題を表示する
    */
   const nextStation = () => {
     let nextIndex;
@@ -92,7 +158,7 @@ const Game: React.FC = () => {
   };
 
   /**
-   * ゲームをリセットする関数
+   * ゲームをリセットする
    */
   const resetGame = () => {
     setCurrentStation(stationNameList[0]);
