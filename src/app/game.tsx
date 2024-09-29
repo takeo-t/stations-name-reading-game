@@ -15,11 +15,14 @@ const getRandomStation = () => {
   return stationNameList[randomIndex];
 }
 
+const initialStation = getRandomStation();
+console.log('initialStation',initialStation)
 const Game: React.FC = () => {
   /**
    * 現在の問題の駅名
    */
-  const [currentStation, setCurrentStation] = useState(stationNameList[0]);
+  const [currentStation, setCurrentStation] = useState(initialStation);
+  console.log('currentStation',currentStation)
   /**
    * 正解数
    */
@@ -39,7 +42,7 @@ const Game: React.FC = () => {
   /**
    * 出題済みの駅名
    */
-  const [usedStations, setUsedStations] = useState<Set<string>>(new Set());
+  const [usedStations, setUsedStations] = useState<Set<string>>(new Set([initialStation.stationName]));
   /**
    * 確定ボタンを押したか後、駅名の選択肢を選択できないようにする
    */
@@ -55,12 +58,12 @@ const Game: React.FC = () => {
   const [stationRecords, setStationRecords] = useState<Record<string, StationRecord>>({});
 
 
-  useEffect(() => {
-    const initialStation = getRandomStation();
-    setCurrentStation(initialStation);
-    setUsedStations(new Set([initialStation.stationName]));
-    generateOptions(initialStation);
-  }, []);
+  // useEffect(() => {
+  //   const initialStation = getRandomStation();
+  //   setCurrentStation(initialStation);
+  //   setUsedStations(new Set([initialStation.stationName]));
+  //   generateOptions(initialStation);
+  // }, []);
 
   /**
    * 初回レンダリング時に選択肢を生成する
@@ -93,10 +96,6 @@ const Game: React.FC = () => {
   };
 
   /**
-   * 確定ボタンをクリックしたときの処理
-   * @returns
-   */
-  /**
    *
    * @returns ユーザーが選択肢を選択していない場合はエラーメッセージを表示し、選択肢を選択している場合は正誤を表示する
    */
@@ -127,7 +126,7 @@ const Game: React.FC = () => {
   };
 
   /**
-   * 
+   * 駅名の正解数を記録する
    */
   const recordAnswer = (stationName: string, isCorrect: boolean) => {
     setStationRecords((prevRecords: Record<string, StationRecord>) => {
@@ -156,6 +155,7 @@ const Game: React.FC = () => {
     setUsedStations((prev) => new Set(prev).add(nextStation.stationName));
     setCurrentStation(nextStation);
   };
+  console.log('usedStations',usedStations)
 
   /**
    * ゲームをリセットする
@@ -181,12 +181,24 @@ const Game: React.FC = () => {
         >
           もう一度プレイする
         </button>
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-2 text-black">各駅名の正解率</h2>
+          <ul>
+            {Object.entries(stationRecords).map(([stationName, record]) => (
+              <li key={stationName} className="text-black">
+                {stationName}: 正解 {record.correct} 回, 不正解 {record.incorrect} 回
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     );
   }
 
   const remainingQuestions = stationNameList.length - usedStations.size;
-
+  console.log('remainingQuestions',remainingQuestions)
+  console.log('stationNameList.length',stationNameList.length)
+  console.log('usedStations.size',usedStations.size)
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-4xl font-bold mb-4 text-black">
