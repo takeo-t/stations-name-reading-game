@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
+import 'tailwindcss/tailwind.css';
 import { stationNameList } from "../../stations-name-list";
-
 
 interface StationRecord {
   correct: number;
